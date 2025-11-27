@@ -54,6 +54,14 @@ export default async function ManageCampaignPage({ params }: { params: Promise<{
                     <h1 className="text-3xl font-bold tracking-tight">Gerenciar Campanha</h1>
                     <p className="text-muted-foreground">{campaign.title}</p>
                 </div>
+                <div className="ml-auto">
+                    <Link href={`/dashboard/campaign/${id}/edit`}>
+                        <Button variant="outline" className="gap-2">
+                            <FileText className="h-4 w-4" />
+                            Editar Campanha
+                        </Button>
+                    </Link>
+                </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
