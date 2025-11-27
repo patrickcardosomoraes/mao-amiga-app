@@ -57,9 +57,10 @@ export function RegisterDonation({ campaignId }: RegisterDonationProps) {
             setMessage("")
             router.refresh() // Atualiza a página para mostrar o novo valor e o apoiador na lista
 
-        } catch (error) {
-            console.error("Erro ao registrar doação:", error)
-            alert("Erro ao registrar doação. Tente novamente.")
+        } catch (error: any) {
+            console.error("Erro detalhado ao registrar doação:", error)
+            const errorMessage = error.message || error.error_description || "Erro desconhecido ao processar doação."
+            alert(`Erro ao registrar doação: ${errorMessage}`)
         } finally {
             setIsLoading(false)
         }
