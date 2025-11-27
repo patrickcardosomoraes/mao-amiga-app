@@ -24,9 +24,18 @@ export default async function DashboardPage() {
         .eq('creator_id', user.id)
         .order('created_at', { ascending: false })
 
+    // 2.1 Fetch User's Donations
+    const { data: donations } = await supabase
+        .from('supporters')
+        .select('amount')
+        .eq('donor_id', user.id)
+
     // 3. Calculate Stats
     const totalRaised = campaigns?.reduce((acc, curr) => acc + Number(curr.raised), 0) || 0
     const activeCampaignsCount = campaigns?.filter(c => c.status === 'active').length || 0
+
+    const totalDonated = donations?.reduce((acc, curr) => acc + Number(curr.amount), 0) || 0
+    const donationsCount = donations?.length || 0
 
     // Transform for UI
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -79,9 +88,9 @@ export default async function DashboardPage() {
                         <Heart className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">R$ 0,00</div>
+                        <div className="text-2xl font-bold">{formatCurrency(totalDonated)}</div>
                         <p className="text-xs text-muted-foreground">
-                            Histórico de doações em breve
+                            Você apoiou {donationsCount} causas
                         </p>
                     </CardContent>
                 </Card>

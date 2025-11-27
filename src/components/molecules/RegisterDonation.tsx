@@ -37,6 +37,8 @@ export function RegisterDonation({ campaignId }: RegisterDonationProps) {
                 return
             }
 
+            const { data: { user } } = await supabase.auth.getUser()
+
             const { error } = await supabase
                 .from('supporters')
                 .insert([
@@ -44,7 +46,8 @@ export function RegisterDonation({ campaignId }: RegisterDonationProps) {
                         campaign_id: campaignId,
                         name: name || "Doador Anônimo",
                         amount: numericAmount,
-                        message: message
+                        message: message,
+                        donor_id: user?.id // Salva o ID do doador se estiver logado
                     }
                 ])
 
