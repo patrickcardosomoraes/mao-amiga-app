@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation"
+import Image from "next/image"
 import { PixQRCode } from "@/components/molecules/PixQRCode"
 import { SupportersList } from "@/components/molecules/SupportersList"
 import { Progress } from "@/components/atoms/Progress"
@@ -6,52 +7,60 @@ import { Button } from "@/components/atoms/Button"
 import { formatCurrency } from "@/lib/pix"
 import { Share2, Flag, Calendar, User } from "lucide-react"
 
-// Mock Data Lookup
+import { createClient } from "@/lib/supabase-server"
+
+// Fetch Real Data from Supabase
 async function getCampaign(id: string) {
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 100))
+    const supabase = await createClient()
 
-    const campaigns = [
-        {
-            id: "1",
-            title: "Reconstrução da Casa da Dona Maria",
-            description: "Ajude a Dona Maria a reconstruir sua casa que foi afetada pelas chuvas. Precisamos de material de construção e mão de obra. A casa foi severamente danificada e ela está morando de favor. Qualquer ajuda é bem-vinda!",
-            imageUrl: "https://images.unsplash.com/photo-1518780664697-55e3ad937233?q=80&w=1000&auto=format&fit=crop",
-            goal: 15000,
-            raised: 8750,
-            pixKey: "email@example.com",
-            beneficiaryName: "Maria da Silva",
-            createdAt: "2023-10-01",
-            creatorId: "user1",
-            supporters: [
-                { id: "s1", name: "João Pedro", amount: 100, message: "Força Dona Maria!", date: "2023-10-02" },
-                { id: "s2", name: "Ana Clara", amount: 50, message: "Deus abençoe", date: "2023-10-03" },
-                { id: "s3", name: "Anônimo", amount: 200, date: "2023-10-04" },
-            ]
-        },
-        // ... other mocks if needed, but fallback to generic for demo
-    ]
+    // 1. Fetch Campaign Details
+    const { data: campaign, error } = await supabase
+        .from('campaigns')
+        .select(`
+            *,
+            profiles:creator_id (
+                name,
+                avatar_url
+            )
+        `)
+        .eq('id', id)
+        .single()
 
-    const campaign = campaigns.find((c) => c.id === id)
-
-    if (!campaign && id) {
-        // Return a generic mock for any other ID to keep the demo working
-        return {
-            id,
-            title: "Campanha Exemplo " + id,
-            description: "Esta é uma campanha de exemplo gerada dinamicamente para demonstração.",
-            imageUrl: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1000&auto=format&fit=crop",
-            goal: 10000,
-            raised: 2500,
-            pixKey: "chave-pix-aleatoria",
-            beneficiaryName: "Beneficiário Exemplo",
-            createdAt: "2023-11-01",
-            creatorId: "userX",
-            supporters: []
-        }
+    if (error || !campaign) {
+        console.error("Erro ao buscar campanha:", error)
+        return null
     }
 
-    return campaign
+    // 2. Fetch Supporters (Last 5)
+    const { data: supporters } = await supabase
+        .from('supporters')
+        .select('*')
+        .eq('campaign_id', id)
+        .order('created_at', { ascending: false })
+        .limit(5)
+
+    // 3. Transform Data to match UI component expectations
+    return {
+        id: campaign.id,
+        title: campaign.title,
+        description: campaign.description,
+        imageUrl: campaign.image_url || "/placeholder-campaign.jpg", // Fallback image
+        goal: Number(campaign.goal),
+        raised: Number(campaign.raised),
+        pixKey: campaign.pix_key,
+        beneficiaryName: campaign.beneficiary_name,
+        createdAt: campaign.created_at,
+        creatorId: campaign.creator_id,
+        creatorName: campaign.profiles?.name || "Organizador",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        supporters: supporters?.map((s: any) => ({
+            id: s.id,
+            name: s.name,
+            amount: Number(s.amount),
+            message: s.message,
+            date: s.created_at
+        })) || []
+    }
 }
 
 export default async function CampaignPage({ params }: { params: Promise<{ id: string }> }) {
@@ -69,11 +78,12 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Left Column: Media & Details */}
                 <div className="lg:col-span-2 space-y-8">
-                    <div className="rounded-xl overflow-hidden bg-gray-100 aspect-video shadow-sm">
-                        <img
+                    <div className="relative rounded-xl overflow-hidden bg-gray-100 aspect-video shadow-sm">
+                        <Image
                             src={campaign.imageUrl}
                             alt={campaign.title}
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
                         />
                     </div>
 
