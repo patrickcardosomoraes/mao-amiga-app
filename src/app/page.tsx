@@ -1,53 +1,43 @@
 import Link from "next/link"
 import { Button } from "@/components/atoms/Button"
 import { CampaignCard } from "@/components/organisms/CampaignCard"
-import { Campaign } from "@/types"
 import { ArrowRight, ShieldCheck, Zap, Heart } from "lucide-react"
+import { createClient } from "@/lib/supabase-server"
 
-// Mock Data
-const featuredCampaigns: Campaign[] = [
-  {
-    id: "1",
-    title: "Reconstrução da Casa da Dona Maria",
-    description: "Ajude a Dona Maria a reconstruir sua casa que foi afetada pelas chuvas. Precisamos de material de construção e mão de obra.",
-    imageUrl: "https://images.unsplash.com/photo-1518780664697-55e3ad937233?q=80&w=1000&auto=format&fit=crop",
-    goal: 15000,
-    raised: 8750,
-    pixKey: "email@example.com",
-    beneficiaryName: "Maria da Silva",
-    createdAt: "2023-10-01",
-    creatorId: "user1",
-    status: 'active'
-  },
-  {
-    id: "2",
-    title: "Cirurgia de Emergência do Rex",
-    description: "O Rex precisa de uma cirurgia urgente na pata. Ele foi resgatado e agora precisa da nossa ajuda para voltar a correr.",
-    imageUrl: "https://images.unsplash.com/photo-1543466835-00a7907e9de1?q=80&w=1000&auto=format&fit=crop",
-    goal: 3000,
-    raised: 1200,
-    pixKey: "12345678900",
-    beneficiaryName: "Abrigo Animal",
-    createdAt: "2023-10-05",
-    creatorId: "user2",
-    status: 'active'
-  },
-  {
-    id: "3",
-    title: "Horta Comunitária do Bairro",
-    description: "Vamos criar uma horta para alimentar 50 famílias carentes. O valor será usado para sementes, ferramentas e adubo.",
-    imageUrl: "https://images.unsplash.com/photo-1592419044706-39796d40f98c?q=80&w=1000&auto=format&fit=crop",
-    goal: 5000,
-    raised: 4800,
-    pixKey: "horta@comunidade.org",
-    beneficiaryName: "Associação de Moradores",
-    createdAt: "2023-10-10",
-    creatorId: "user3",
-    status: 'active'
-  }
-]
+export const revalidate = 60 // Revalidar a cada 60 segundos
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createClient()
+
+  const { data: campaigns } = await supabase
+    .from('campaigns')
+    .select(`
+      *,
+      profiles:creator_id (
+        name,
+        avatar_url
+      )
+    `)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(3)
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const featuredCampaigns = campaigns?.map((c: any) => ({
+    id: c.id,
+    title: c.title,
+    description: c.description,
+    imageUrl: c.image_url || "/placeholder-campaign.jpg",
+    goal: Number(c.goal),
+    raised: Number(c.raised),
+    pixKey: c.pix_key,
+    beneficiaryName: c.beneficiary_name,
+    createdAt: c.created_at,
+    creatorId: c.creator_id,
+    creatorName: c.profiles?.name || "Organizador",
+    status: c.status
+  })) || []
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
@@ -130,9 +120,15 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredCampaigns.map((campaign) => (
-              <CampaignCard key={campaign.id} campaign={campaign} />
-            ))}
+            {featuredCampaigns.length > 0 ? (
+              featuredCampaigns.map((campaign) => (
+                <CampaignCard key={campaign.id} campaign={campaign} />
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12 text-muted-foreground">
+                Nenhuma campanha encontrada no momento. Seja o primeiro a criar!
+              </div>
+            )}
           </div>
         </div>
       </section>
