@@ -1,6 +1,6 @@
 import { Button } from "@/components/atoms/Button"
 import Link from "next/link"
-import { Github, Linkedin, Mail } from "lucide-react"
+import { Github, Mail } from "lucide-react"
 
 export default function About() {
     return (
