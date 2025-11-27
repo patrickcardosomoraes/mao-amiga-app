@@ -39,7 +39,10 @@ export function Navbar() {
             <div className="container-custom flex h-16 items-center justify-between">
                 <Link href="/" className="flex items-center space-x-2">
                     <HeartHandshake className="h-6 w-6 md:h-8 md:w-8 text-primary" />
-                    <span className="text-lg md:text-xl font-bold tracking-tight text-primary">mão amiga</span>
+                    <div className="flex flex-col md:flex-row md:items-baseline md:gap-3">
+                        <span className="text-lg md:text-xl font-bold tracking-tight text-primary">mão amiga</span>
+                        <span className="hidden lg:block text-xs text-muted-foreground italic font-medium">pequenos gestos, grandes mudanças</span>
+                    </div>
                 </Link>
 
                 {/* Desktop Navigation */}
