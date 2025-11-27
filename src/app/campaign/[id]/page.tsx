@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation"
 import Image from "next/image"
+import { RegisterDonation } from "@/components/molecules/RegisterDonation"
 import { PixQRCode } from "@/components/molecules/PixQRCode"
 import { SupportersList } from "@/components/molecules/SupportersList"
 import { Progress } from "@/components/atoms/Progress"
@@ -134,6 +135,12 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
                                     amount={0} // Open amount
                                     description={`Doação para ${campaign.title}`}
                                 />
+
+                                <div className="pt-2">
+                                    <RegisterDonation
+                                        campaignId={campaign.id}
+                                    />
+                                </div>
                             </div>
 
                             <div className="pt-4 border-t flex justify-center">
