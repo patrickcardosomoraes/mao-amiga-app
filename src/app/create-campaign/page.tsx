@@ -70,6 +70,38 @@ export default function CreateCampaignPage() {
                 throw new Error("Usuário não autenticado. Por favor, faça login novamente.")
             }
 
+            // --- AUTO-CORREÇÃO DE PERFIL ---
+            // Verifica se o perfil existe
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('id', user.id)
+                .single()
+
+            if (!profile) {
+                console.log("Perfil não encontrado. Tentando criar automaticamente...")
+                // Tenta criar o perfil usando os dados do auth
+                const { error: createProfileError } = await supabase
+                    .from('profiles')
+                    .insert([
+                        {
+                            id: user.id,
+                            email: user.email,
+                            name: user.user_metadata?.name || user.email?.split('@')[0] || 'Usuário'
+                        }
+                    ])
+
+                if (createProfileError) {
+                    console.error("Erro ao criar perfil automático:", createProfileError)
+                    // Não lançamos erro aqui, deixamos tentar criar a campanha. 
+                    // Se falhar na FK, o erro será pego no catch principal.
+                    // Mas avisamos o usuário que pode ser necessário rodar o SQL de fix.
+                    throw new Error("Seu perfil de usuário está incompleto no banco de dados. Por favor, contate o suporte para rodar o script de correção de perfis.")
+                }
+                console.log("Perfil criado automaticamente com sucesso!")
+            }
+            // -------------------------------
+
             // Validação da Meta
             const numericGoal = parseFloat(goal.replace(/\./g, '').replace(',', '.'))
             if (isNaN(numericGoal) || numericGoal <= 0) {
