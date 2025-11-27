@@ -24,6 +24,8 @@ export function RegisterDonation({ campaignId }: RegisterDonationProps) {
     const [name, setName] = React.useState("")
     const [message, setMessage] = React.useState("")
 
+    const [proofFile, setProofFile] = React.useState<File | null>(null)
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
@@ -38,6 +40,28 @@ export function RegisterDonation({ campaignId }: RegisterDonationProps) {
             }
 
             const { data: { user } } = await supabase.auth.getUser()
+            let proofUrl = null
+
+            // Upload do Comprovante (se houver)
+            if (proofFile) {
+                const fileExt = proofFile.name.split('.').pop()
+                const fileName = `proofs/${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`
+
+                const { error: uploadError } = await supabase.storage
+                    .from('campaign-images') // Usando o mesmo bucket por simplicidade
+                    .upload(fileName, proofFile)
+
+                if (uploadError) {
+                    console.error("Erro no upload do comprovante:", uploadError)
+                    throw new Error("Falha ao enviar o comprovante. Tente novamente ou envie sem comprovante.")
+                }
+
+                const { data: publicUrlData } = supabase.storage
+                    .from('campaign-images')
+                    .getPublicUrl(fileName)
+
+                proofUrl = publicUrlData.publicUrl
+            }
 
             const { error } = await supabase
                 .from('supporters')
@@ -47,7 +71,8 @@ export function RegisterDonation({ campaignId }: RegisterDonationProps) {
                         name: name || "Doador Anônimo",
                         amount: numericAmount,
                         message: message,
-                        donor_id: user?.id // Salva o ID do doador se estiver logado
+                        donor_id: user?.id,
+                        proof_url: proofUrl
                     }
                 ])
 
@@ -58,7 +83,8 @@ export function RegisterDonation({ campaignId }: RegisterDonationProps) {
             setAmount("")
             setName("")
             setMessage("")
-            router.refresh() // Atualiza a página para mostrar o novo valor e o apoiador na lista
+            setProofFile(null)
+            router.refresh()
 
         } catch (error: any) {
             console.error("Erro detalhado ao registrar doação:", error)
@@ -84,12 +110,21 @@ export function RegisterDonation({ campaignId }: RegisterDonationProps) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-md bg-background rounded-xl shadow-2xl border p-6 animate-in fade-in zoom-in duration-200">
+            <div className="w-full max-w-md bg-background rounded-xl shadow-2xl border p-6 animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-lg font-bold">Registrar Doação</h3>
                     <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)}>
                         <X className="h-4 w-4" />
                     </Button>
+                </div>
+
+                <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-6 text-sm text-amber-800 dark:text-amber-200">
+                    <p className="font-semibold mb-1">⚠️ Importante:</p>
+                    <p>
+                        A Mão Amiga é construída na base da confiança. Por favor,
+                        <strong> registre sua doação apenas se você realmente realizou o Pix</strong>.
+                        Sua honestidade é fundamental para manter essa corrente do bem funcionando.
+                    </p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -103,6 +138,18 @@ export function RegisterDonation({ campaignId }: RegisterDonationProps) {
                             required
                             className="text-lg font-semibold"
                         />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="proof">Comprovante (Opcional)</Label>
+                        <Input
+                            id="proof"
+                            type="file"
+                            accept="image/*,application/pdf"
+                            onChange={(e) => setProofFile(e.target.files?.[0] || null)}
+                            className="text-sm cursor-pointer file:cursor-pointer"
+                        />
+                        <p className="text-xs text-muted-foreground">Envie uma foto ou PDF do comprovante do Pix.</p>
                     </div>
 
                     <div className="space-y-2">
