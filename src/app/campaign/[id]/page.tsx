@@ -1,12 +1,13 @@
 import { notFound } from "next/navigation"
 import Image from "next/image"
 import { RegisterDonation } from "@/components/molecules/RegisterDonation"
+import { ShareButtons } from "@/components/molecules/ShareButtons"
 import { PixQRCode } from "@/components/molecules/PixQRCode"
 import { SupportersList } from "@/components/molecules/SupportersList"
 import { Progress } from "@/components/atoms/Progress"
 import { Button } from "@/components/atoms/Button"
 import { formatCurrency } from "@/lib/pix"
-import { Share2, Flag, Calendar, User } from "lucide-react"
+import { Flag, Calendar, User } from "lucide-react"
 
 import { createClient } from "@/lib/supabase-server"
 
@@ -191,21 +192,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
                             </div>
                         </div>
 
-                        <div className="bg-primary/5 rounded-xl p-6 border border-primary/10">
-                            <h3 className="font-semibold mb-2 flex items-center gap-2">
-                                <Share2 className="h-4 w-4" />
-                                Espalhe a solidariedade
-                            </h3>
-                            <p className="text-sm text-muted-foreground mb-4">
-                                Compartilhar essa campanha aumenta em 3x as chances de bater a meta!
-                            </p>
-                            <div className="grid grid-cols-2 gap-2">
-                                <Button variant="outline" className="w-full">WhatsApp</Button>
-                                <Button variant="outline" className="w-full">Facebook</Button>
-                                <Button variant="outline" className="w-full">Twitter</Button>
-                                <Button variant="outline" className="w-full">Copiar Link</Button>
-                            </div>
-                        </div>
+                        <ShareButtons campaignId={campaign.id} campaignTitle={campaign.title} />
                     </div>
                 </div>
             </div>
