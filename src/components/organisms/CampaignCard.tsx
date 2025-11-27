@@ -7,9 +7,10 @@ import { Heart } from "lucide-react"
 
 interface CampaignCardProps {
     campaign: Campaign
+    manageMode?: boolean
 }
 
-export function CampaignCard({ campaign }: CampaignCardProps) {
+export function CampaignCard({ campaign, manageMode = false }: CampaignCardProps) {
     const percentage = Math.round((campaign.raised / campaign.goal) * 100)
 
     return (
@@ -48,13 +49,22 @@ export function CampaignCard({ campaign }: CampaignCardProps) {
                 </div>
             </CardContent>
             <CardFooter className="p-4 pt-0">
-                <Link
-                    href={`/campaign/${campaign.id}`}
-                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 w-full gap-2"
-                >
-                    <Heart className="w-4 h-4 fill-current" />
-                    Apoiar Agora
-                </Link>
+                {manageMode ? (
+                    <Link
+                        href={`/dashboard/campaign/${campaign.id}`}
+                        className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 w-full gap-2"
+                    >
+                        Gerenciar
+                    </Link>
+                ) : (
+                    <Link
+                        href={`/campaign/${campaign.id}`}
+                        className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 w-full gap-2"
+                    >
+                        <Heart className="w-4 h-4 fill-current" />
+                        Apoiar Agora
+                    </Link>
+                )}
             </CardFooter>
         </Card>
     )

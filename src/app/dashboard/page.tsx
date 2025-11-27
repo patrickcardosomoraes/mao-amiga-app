@@ -101,7 +101,7 @@ export default async function DashboardPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {myCampaigns.length > 0 ? (
                         myCampaigns.map((campaign) => (
-                            <CampaignCard key={campaign.id} campaign={campaign} />
+                            <CampaignCard key={campaign.id} campaign={campaign} manageMode={true} />
                         ))
                     ) : (
                         <div className="col-span-full text-center py-12 border rounded-xl bg-gray-50 dark:bg-gray-900/50">
