@@ -9,7 +9,20 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
   title: "Mão Amiga | Crowdfunding Social",
-  description: "A plataforma de vaquinhas online com taxa zero e foco em solidariedade.",
+  description: "Pequenos gestos, grandes mudanças. A plataforma de vaquinhas online com taxa zero e foco em solidariedade.",
+  openGraph: {
+    title: "Mão Amiga | Crowdfunding Social",
+    description: "Pequenos gestos, grandes mudanças. Ajude quem precisa ou crie sua campanha gratuitamente.",
+    url: "https://maoamiga.com.br", // URL canônica (idealmente deve ser configurada via env var)
+    siteName: "Mão Amiga",
+    locale: "pt_BR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Mão Amiga | Crowdfunding Social",
+    description: "Pequenos gestos, grandes mudanças. Ajude quem precisa ou crie sua campanha gratuitamente.",
+  },
 };
 
 export default function RootLayout({

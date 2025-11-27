@@ -10,8 +10,13 @@ import { Share2, Flag, Calendar, User } from "lucide-react"
 
 import { createClient } from "@/lib/supabase-server"
 
+import { Metadata } from "next"
+
+// ... (imports existentes)
+
 // Fetch Real Data from Supabase
 async function getCampaign(id: string) {
+    // ... (lógica existente mantida)
     const supabase = await createClient()
 
     // 1. Fetch Campaign Details
@@ -28,7 +33,6 @@ async function getCampaign(id: string) {
         .single()
 
     if (error || !campaign) {
-        console.error("Erro ao buscar campanha:", error)
         return null
     }
 
@@ -40,12 +44,12 @@ async function getCampaign(id: string) {
         .order('created_at', { ascending: false })
         .limit(5)
 
-    // 3. Transform Data to match UI component expectations
+    // 3. Transform Data
     return {
         id: campaign.id,
         title: campaign.title,
         description: campaign.description,
-        imageUrl: campaign.image_url || "/placeholder-campaign.jpg", // Fallback image
+        imageUrl: campaign.image_url || "/placeholder-campaign.jpg",
         goal: Number(campaign.goal),
         raised: Number(campaign.raised),
         pixKey: campaign.pix_key,
@@ -61,6 +65,42 @@ async function getCampaign(id: string) {
             message: s.message,
             date: s.created_at
         })) || []
+    }
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+    const { id } = await params
+    const campaign = await getCampaign(id)
+
+    if (!campaign) {
+        return {
+            title: "Campanha não encontrada | Mão Amiga",
+            description: "A campanha que você procura não existe ou foi removida."
+        }
+    }
+
+    return {
+        title: `${campaign.title} | Mão Amiga`,
+        description: campaign.description.substring(0, 160) + "...",
+        openGraph: {
+            title: campaign.title,
+            description: campaign.description.substring(0, 160) + "...",
+            images: [
+                {
+                    url: campaign.imageUrl,
+                    width: 1200,
+                    height: 630,
+                    alt: campaign.title,
+                },
+            ],
+            type: "website",
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: campaign.title,
+            description: campaign.description.substring(0, 160) + "...",
+            images: [campaign.imageUrl],
+        },
     }
 }
 
