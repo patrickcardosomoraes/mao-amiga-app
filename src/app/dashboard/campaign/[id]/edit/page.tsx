@@ -165,6 +165,52 @@ export default function EditCampaignPage() {
         }
     }
 
+    const handleFinalize = async () => {
+        if (!confirm("Tem certeza que deseja finalizar esta campanha? Ela será marcada como concluída.")) return
+        setIsSaving(true)
+        try {
+            const { error } = await supabase
+                .from('campaigns')
+                .update({ status: 'completed' })
+                .eq('id', id)
+
+            if (error) throw error
+
+            alert("Campanha finalizada com sucesso!")
+            router.push("/dashboard")
+            router.refresh()
+        } catch (error: any) {
+            console.error("Erro ao finalizar:", error)
+            alert("Erro ao finalizar campanha.")
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
+    const handleDelete = async () => {
+        const confirmText = prompt("Para confirmar a exclusão, digite 'DELETAR' abaixo:")
+        if (confirmText !== "DELETAR") return
+
+        setIsSaving(true)
+        try {
+            const { error } = await supabase
+                .from('campaigns')
+                .delete()
+                .eq('id', id)
+
+            if (error) throw error
+
+            alert("Campanha excluída permanentemente.")
+            router.push("/dashboard")
+            router.refresh()
+        } catch (error: any) {
+            console.error("Erro ao excluir:", error)
+            alert("Erro ao excluir campanha.")
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
     if (isLoading) {
         return <div className="container-custom py-20 text-center">Carregando...</div>
     }
@@ -193,6 +239,7 @@ export default function EditCampaignPage() {
                             <CardDescription>Faça as alterações necessárias.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
+                            {/* ... campos existentes ... */}
                             <div className="space-y-2">
                                 <Label htmlFor="title">Título da Campanha</Label>
                                 <Input
@@ -313,13 +360,40 @@ export default function EditCampaignPage() {
                                 )}
                             </div>
                         </CardContent>
-                        <CardFooter className="flex justify-between">
+                        <CardFooter className="flex justify-between border-t p-6">
                             <Button variant="ghost" type="button" onClick={() => router.back()}>Cancelar</Button>
                             <Button type="submit" isLoading={isSaving} className="w-full md:w-auto ml-auto">
                                 Salvar Alterações
                             </Button>
                         </CardFooter>
                     </form>
+                </Card>
+
+                <Card className="border-red-200 dark:border-red-900">
+                    <CardHeader>
+                        <CardTitle className="text-red-600 dark:text-red-400">Zona de Perigo</CardTitle>
+                        <CardDescription>Ações irreversíveis ou que alteram o status da campanha.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="flex items-center justify-between p-4 border rounded-lg bg-red-50 dark:bg-red-950/20">
+                            <div>
+                                <h4 className="font-medium">Finalizar Campanha</h4>
+                                <p className="text-sm text-muted-foreground">Marca a campanha como concluída. Não aceitará mais doações.</p>
+                            </div>
+                            <Button type="button" variant="outline" onClick={handleFinalize} className="border-red-200 hover:bg-red-100 hover:text-red-700">
+                                Finalizar
+                            </Button>
+                        </div>
+                        <div className="flex items-center justify-between p-4 border rounded-lg bg-red-50 dark:bg-red-950/20">
+                            <div>
+                                <h4 className="font-medium">Excluir Campanha</h4>
+                                <p className="text-sm text-muted-foreground">Remove permanentemente a campanha e todo seu histórico.</p>
+                            </div>
+                            <Button type="button" variant="destructive" onClick={handleDelete}>
+                                Excluir
+                            </Button>
+                        </div>
+                    </CardContent>
                 </Card>
             </div>
         </div>
