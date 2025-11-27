@@ -1,13 +1,14 @@
 "use client"
 
 import * as React from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/atoms/Button"
 import { Input } from "@/components/atoms/Input"
 import { Textarea } from "@/components/atoms/Textarea"
 import { Label } from "@/components/atoms/Label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/atoms/Card"
-import { Upload, DollarSign, Key, Image as ImageIcon, X, User } from "lucide-react"
+import { Upload, DollarSign, Key, X, User } from "lucide-react"
 import { createClient } from "@/lib/supabase-client"
 
 export default function CreateCampaignPage() {
@@ -61,16 +62,25 @@ export default function CreateCampaignPage() {
         setIsLoading(true)
 
         try {
-            const { data: { user } } = await supabase.auth.getUser()
+            console.log("Iniciando criação de campanha...")
+            const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-            if (!user) {
-                throw new Error("Usuário não autenticado")
+            if (authError || !user) {
+                console.error("Erro de autenticação:", authError)
+                throw new Error("Usuário não autenticado. Por favor, faça login novamente.")
+            }
+
+            // Validação da Meta
+            const numericGoal = parseFloat(goal.replace(/\./g, '').replace(',', '.'))
+            if (isNaN(numericGoal) || numericGoal <= 0) {
+                throw new Error("O valor da meta é inválido. Digite um número maior que zero.")
             }
 
             let imageUrl = null
 
             // 1. Upload Image if exists
             if (file) {
+                console.log("Iniciando upload de imagem...")
                 const fileExt = file.name.split('.').pop()
                 const fileName = `${user.id}/${Date.now()}.${fileExt}`
 
@@ -79,6 +89,7 @@ export default function CreateCampaignPage() {
                     .upload(fileName, file)
 
                 if (uploadError) {
+                    console.error("Erro no upload:", uploadError)
                     throw uploadError
                 }
 
@@ -87,9 +98,11 @@ export default function CreateCampaignPage() {
                     .getPublicUrl(fileName)
 
                 imageUrl = publicUrlData.publicUrl
+                console.log("Imagem enviada com sucesso:", imageUrl)
             }
 
             // 2. Create Campaign
+            console.log("Inserindo campanha no banco...")
             const { data, error: insertError } = await supabase
                 .from('campaigns')
                 .insert([
@@ -97,7 +110,7 @@ export default function CreateCampaignPage() {
                         creator_id: user.id,
                         title,
                         description,
-                        goal: parseFloat(goal.replace(',', '.')), // Handle PT-BR currency format basic
+                        goal: numericGoal,
                         pix_key: pixKey,
                         beneficiary_name: beneficiaryName,
                         image_url: imageUrl,
@@ -108,17 +121,38 @@ export default function CreateCampaignPage() {
                 .single()
 
             if (insertError) {
+                console.error("Erro na inserção:", insertError)
                 throw insertError
             }
+
+            console.log("Campanha criada:", data)
 
             // 3. Redirect
             if (data) {
                 router.push(`/campaign/${data.id}`)
             }
 
-        } catch (error) {
-            console.error("Erro ao criar campanha:", error)
-            alert("Erro ao criar campanha. Verifique se você está logado e preencheu todos os campos.")
+        } catch (error: any) {
+            console.error("Erro detalhado no catch:", error)
+
+            let errorMessage = "Erro desconhecido"
+
+            if (error instanceof Error) {
+                errorMessage = error.message
+            } else if (typeof error === 'object' && error !== null) {
+                // Tenta extrair mensagem de objetos de erro do Supabase/Postgres
+                errorMessage = error.message || error.error_description || error.details || JSON.stringify(error)
+            } else if (typeof error === 'string') {
+                errorMessage = error
+            }
+
+            if (errorMessage.includes("bucket")) {
+                alert(`Erro no upload da imagem: O bucket 'campaign-images' não foi encontrado ou você não tem permissão. Verifique se criou o bucket no Supabase. Detalhes: ${errorMessage}`)
+            } else if (errorMessage.includes("row-level security") || errorMessage.includes("policy")) {
+                alert(`Erro de permissão: Você não tem permissão para criar campanhas. Verifique se está logado corretamente. Detalhes: ${errorMessage}`)
+            } else {
+                alert(`Erro ao criar campanha: ${errorMessage}`)
+            }
         } finally {
             setIsLoading(false)
         }
@@ -238,7 +272,12 @@ export default function CreateCampaignPage() {
                                     </div>
                                 ) : (
                                     <div className="relative rounded-xl overflow-hidden border aspect-video group">
-                                        <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                                        <Image
+                                            src={previewUrl}
+                                            alt="Preview"
+                                            fill
+                                            className="object-cover"
+                                        />
                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                             <Button
                                                 type="button"
