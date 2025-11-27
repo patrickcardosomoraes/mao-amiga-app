@@ -157,9 +157,10 @@ export default function EditCampaignPage() {
             router.push(`/dashboard/campaign/${id}`)
             router.refresh()
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Erro ao atualizar:", error)
-            alert(`Erro ao atualizar campanha: ${error.message || "Erro desconhecido"}`)
+            const errorMessage = error instanceof Error ? error.message : "Erro desconhecido"
+            alert(`Erro ao atualizar campanha: ${errorMessage}`)
         } finally {
             setIsSaving(false)
         }
@@ -179,7 +180,7 @@ export default function EditCampaignPage() {
             alert("Campanha finalizada com sucesso!")
             router.push("/dashboard")
             router.refresh()
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Erro ao finalizar:", error)
             alert("Erro ao finalizar campanha.")
         } finally {
@@ -203,7 +204,7 @@ export default function EditCampaignPage() {
             alert("Campanha excluída permanentemente.")
             router.push("/dashboard")
             router.refresh()
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Erro ao excluir:", error)
             alert("Erro ao excluir campanha.")
         } finally {
